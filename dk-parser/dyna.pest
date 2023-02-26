@@ -1,0 +1,13 @@
+//LS-DYNA
+COMMENT= _{ ("$" ~ line)+ }
+line={ (!NEWLINE ~ ANY)* ~ NEWLINE }
+
+file = { SOI ~ start? ~ deck* ~ end ~ EOI }
+  deck={ keyword ~ card* ~ &"*" }
+    keyword={ "*" ~ word ~ suffix* ~ NEWLINE }
+    card={!keyword ~ !COMMENT ~ line }
+
+suffix={ "_" ~ ("TITLE" | "ID" | word)}
+word={ASCII_ALPHANUMERIC+}
+start=_{ "*KEYWORD" ~ line ~ NEWLINE* }
+end=_{ "*END" ~ NEWLINE* }
