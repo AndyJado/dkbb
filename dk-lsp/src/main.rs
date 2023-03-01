@@ -39,9 +39,12 @@ impl LanguageServer for Backend {
         Ok(InitializeResult {
             server_info: None,
             capabilities: ServerCapabilities {
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
                 execute_command_provider: Some(ExecuteCommandOptions {
                     commands: vec!["custom.notification".to_string()],
-                    work_done_progress_options: Default::default(),
+                    work_done_progress_options: WorkDoneProgressOptions {
+                        work_done_progress: Some(true),
+                    },
                 }),
                 ..ServerCapabilities::default()
             },
@@ -49,8 +52,25 @@ impl LanguageServer for Backend {
         })
     }
 
+    async fn did_open(&self, _params: DidOpenTextDocumentParams) {
+        self.client
+            .log_message(MessageType::INFO, "file opened!")
+            .await;
+    }
+
     async fn shutdown(&self) -> Result<()> {
         Ok(())
+    }
+
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        let range = params.text_document_position_params;
+        Ok(Some(Hover {
+            contents: HoverContents::Markup(MarkupContent {
+                kind: MarkupKind::Markdown,
+                value: "la".to_string(),
+            }),
+            range: Some(Range::new(range.position, range.position)),
+        }))
     }
 
     async fn execute_command(&self, params: ExecuteCommandParams) -> Result<Option<Value>> {
