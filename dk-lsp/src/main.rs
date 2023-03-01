@@ -40,6 +40,12 @@ impl LanguageServer for Backend {
             server_info: None,
             capabilities: ServerCapabilities {
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
+                document_symbol_provider: Some(OneOf::Right(DocumentSymbolOptions {
+                    label: Some("lable".to_string()),
+                    work_done_progress_options: WorkDoneProgressOptions {
+                        work_done_progress: None,
+                    },
+                })),
                 execute_command_provider: Some(ExecuteCommandOptions {
                     commands: vec!["custom.notification".to_string()],
                     work_done_progress_options: WorkDoneProgressOptions {
@@ -60,6 +66,23 @@ impl LanguageServer for Backend {
 
     async fn shutdown(&self) -> Result<()> {
         Ok(())
+    }
+
+    async fn document_symbol(
+        &self,
+        params: DocumentSymbolParams,
+    ) -> Result<Option<DocumentSymbolResponse>> {
+        let uri = params.text_document.uri;
+        let info = SymbolInformation {
+            name: "doc_sbol".to_string(),
+            kind: SymbolKind::FUNCTION,
+            tags: None,
+            deprecated: None,
+            location: Location::new(uri, Range::new(Position::new(0, 1), Position::new(2, 3))),
+            container_name: None,
+        };
+        let res = DocumentSymbolResponse::Flat(vec![info]);
+        Ok(Some(res))
     }
 
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
