@@ -40,6 +40,7 @@ impl LanguageServer for Backend {
             server_info: None,
             capabilities: ServerCapabilities {
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
+                color_provider: Some(ColorProviderCapability::Simple(true)),
                 document_symbol_provider: Some(OneOf::Right(DocumentSymbolOptions {
                     label: Some("lable".to_string()),
                     work_done_progress_options: WorkDoneProgressOptions {
