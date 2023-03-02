@@ -100,6 +100,9 @@ impl LanguageServer for Backend {
     async fn execute_command(&self, params: ExecuteCommandParams) -> Result<Option<Value>> {
         if params.command == "custom.notification" {
             self.client
+                .show_message(MessageType::INFO, "info".to_string())
+                .await;
+            self.client
                 .send_notification::<CustomNotification>(CustomNotificationParams::new(
                     "Hello", "Message",
                 ))
