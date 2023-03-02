@@ -47,6 +47,15 @@ impl LanguageServer for Backend {
                         work_done_progress: None,
                     },
                 })),
+                completion_provider: Some(CompletionOptions {
+                    resolve_provider: Some(true),
+                    trigger_characters: Some(vec!["*".to_string()]),
+                    all_commit_characters: None,
+                    work_done_progress_options: WorkDoneProgressOptions {
+                        work_done_progress: None,
+                    },
+                }),
+
                 execute_command_provider: Some(ExecuteCommandOptions {
                     commands: vec!["custom.notification".to_string()],
                     work_done_progress_options: WorkDoneProgressOptions {
@@ -71,6 +80,13 @@ impl LanguageServer for Backend {
 
     async fn shutdown(&self) -> Result<()> {
         Ok(())
+    }
+
+    async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
+        let item = CompletionItem::new_simple("new".to_string(), "sim".to_string());
+        let remains = vec![item];
+        let res = CompletionResponse::Array(remains);
+        Ok(Some(res))
     }
 
     async fn document_symbol(
