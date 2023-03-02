@@ -59,7 +59,11 @@ impl LanguageServer for Backend {
         })
     }
 
-    async fn did_open(&self, _params: DidOpenTextDocumentParams) {
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        let uri = params.text_document.uri;
+        let diag = Diagnostic::new_simple(Range::default(), "dug".to_string());
+        let diags = vec![diag];
+        self.client.publish_diagnostics(uri, diags, None).await;
         self.client
             .log_message(MessageType::INFO, "file opened!")
             .await;
