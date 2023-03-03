@@ -2,7 +2,6 @@ use std::fs::read_to_string;
 
 use dk_parser::dyna_psr::{Rule, TryParser};
 use pest::Parser;
-use pest_derive::Parser;
 
 fn main() {
     eg_playground()

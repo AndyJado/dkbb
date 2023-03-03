@@ -1,3 +1,9 @@
+use dk_parser::dyna_psr::{Rule, TryParser};
+use pest::Parser;
+use ropey::Rope;
+use std::collections::HashMap;
+
+use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tower_lsp::jsonrpc::{Error, Result};
@@ -31,6 +37,8 @@ impl Notification for CustomNotification {
 #[derive(Debug)]
 struct Backend {
     client: Client,
+    ast_map: DashMap<String, HashMap<String, String>>,
+    document_map: DashMap<String, Rope>,
 }
 
 #[tower_lsp::async_trait]
@@ -70,12 +78,14 @@ impl LanguageServer for Backend {
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri;
+        let doc = params.text_document.text;
         let diag = Diagnostic::new_simple(Range::default(), "dug".to_string());
         let diags = vec![diag];
         self.client.publish_diagnostics(uri, diags, None).await;
         self.client
             .log_message(MessageType::INFO, "file opened!")
             .await;
+        let rules = TryParser::parse(Rule::file, &doc);
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -151,6 +161,10 @@ async fn main() {
     #[cfg(feature = "runtime-agnostic")]
     let (stdin, stdout) = (stdin.compat(), stdout.compat_write());
 
-    let (service, socket) = LspService::new(|client| Backend { client });
+    let (service, socket) = LspService::new(|client| Backend {
+        client,
+        ast_map: DashMap::new(),
+        document_map: DashMap::new(),
+    });
     Server::new(stdin, stdout, socket).serve(service).await;
 }
