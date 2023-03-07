@@ -8,7 +8,7 @@ fn main() {
 }
 
 fn eg_playground() {
-    let file_path = "sample.k";
+    let file_path = "../source.k";
     let file_str = read_to_string(file_path).expect("file should contain value");
     let file_node = TryParser::parse(dk_parser::dyna_psr::Rule::file, &file_str)
         .expect("should parse file from str")
