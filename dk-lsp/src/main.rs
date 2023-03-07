@@ -2,38 +2,13 @@ use dk_lsp::helpers::IntoLocation;
 use dk_parser::dyna_psr::{Rule, TryParser};
 use pest::Parser;
 use ropey::Rope;
-use std::collections::HashMap;
 
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tower_lsp::jsonrpc::{Error, Result};
-use tower_lsp::lsp_types::notification::Notification;
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
-
-#[derive(Debug, Deserialize, Serialize)]
-struct CustomNotificationParams {
-    title: String,
-    message: String,
-}
-
-impl CustomNotificationParams {
-    fn new(title: impl Into<String>, message: impl Into<String>) -> Self {
-        CustomNotificationParams {
-            title: title.into(),
-            message: message.into(),
-        }
-    }
-}
-
-enum CustomNotification {}
-
-impl Notification for CustomNotification {
-    type Params = CustomNotificationParams;
-
-    const METHOD: &'static str = "custom/notification";
-}
 
 #[derive(Debug)]
 struct Backend {
@@ -180,11 +155,6 @@ impl LanguageServer for Backend {
         if params.command == "custom.notification" {
             self.client
                 .show_message(MessageType::INFO, "info".to_string())
-                .await;
-            self.client
-                .send_notification::<CustomNotification>(CustomNotificationParams::new(
-                    "Hello", "Message",
-                ))
                 .await;
             self.client
                 .log_message(
