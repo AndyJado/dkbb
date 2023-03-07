@@ -18,7 +18,15 @@ fn eg_playground() {
         if rule.as_rule() != Rule::deck {
             continue;
         };
-        let keyword = rule.into_inner().next().unwrap();
-        dbg!(keyword.as_str().trim());
+        let Some(keyword) = rule
+            .into_inner()
+            .next()
+            .unwrap()
+            .into_inner()
+            .next() else {continue;};
+        if keyword.as_rule() != Rule::keyword {
+            continue;
+        };
+        println!("{}", keyword.as_str());
     }
 }

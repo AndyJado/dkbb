@@ -3,9 +3,12 @@ COMMENT= _{ ("$" ~ line)+ }
 line={ (!NEWLINE ~ ANY)* ~ NEWLINE }
 
 file = { SOI ~ start? ~ deck* ~ end ~ EOI }
-  deck={ keyword ~ card* ~ &"*" }
-    keyword={ "*" ~ word ~ suffix* ~ NEWLINE }
-    card={!keyword ~ !COMMENT ~ line }
+  deck={ keywords ~ card* ~ &"*" }
+    keywords={ node | element | keyword }
+    card={!keywords ~ !COMMENT ~ line }
+      keyword={ "*" ~ word ~ suffix* ~ NEWLINE }
+      node={"*NODE" ~ NEWLINE }
+      element={"*ELEMENT" ~ suffix* ~ NEWLINE }
 
 suffix={ "_" ~ ("TITLE" | "ID" | word)}
 word={ASCII_ALPHANUMERIC+}
