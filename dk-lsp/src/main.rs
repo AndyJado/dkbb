@@ -1,3 +1,4 @@
+use dk_lsp::helpers::IntoLocation;
 use dk_parser::dyna_psr::{Rule, TryParser};
 use pest::Parser;
 use ropey::Rope;
@@ -37,8 +38,44 @@ impl Notification for CustomNotification {
 #[derive(Debug)]
 struct Backend {
     client: Client,
-    ast_map: DashMap<String, HashMap<String, String>>,
+    ast_map: DashMap<String, Location>,
     document_map: DashMap<String, Rope>,
+}
+
+impl Backend {
+    async fn on_change(&self, params: TextDocumentItem) {
+        let rope = ropey::Rope::from_str(&params.text);
+        self.document_map
+            .insert(params.uri.to_string(), rope.clone());
+        let diag_msg = format!("{:?}", self.ast_map);
+        let diag = Diagnostic::new_simple(Range::default(), diag_msg);
+        let diags = vec![diag];
+        self.client
+            .publish_diagnostics(params.uri.clone(), diags, None)
+            .await;
+        // parse file
+        let file_node = TryParser::parse(dk_parser::dyna_psr::Rule::file, &params.text)
+            .expect("should parse file from str")
+            .next()
+            .unwrap();
+        for rule in file_node.into_inner() {
+            if rule.as_rule() != Rule::deck {
+                continue;
+            };
+            let Some(keyword) = rule
+            .into_inner()
+            .next()
+            .unwrap()
+            .into_inner()
+            .next() else {continue;};
+            if keyword.as_rule() != Rule::keyword {
+                continue;
+            };
+            let symbol = keyword.as_str().trim().to_string();
+            let loc = keyword.as_span().into_lsp_location(&params.uri);
+            self.ast_map.insert(symbol, loc);
+        }
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -78,14 +115,19 @@ impl LanguageServer for Backend {
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri;
-        let doc = params.text_document.text;
-        let diag = Diagnostic::new_simple(Range::default(), "dug".to_string());
-        let diags = vec![diag];
-        self.client.publish_diagnostics(uri, diags, None).await;
+        let text = params.text_document.text;
+        let version = 0;
+        let language_id = "dyna".to_string();
+        self.on_change(TextDocumentItem {
+            uri,
+            text,
+            version,
+            language_id,
+        })
+        .await;
         self.client
             .log_message(MessageType::INFO, "file opened!")
             .await;
-        let rules = TryParser::parse(Rule::file, &doc);
     }
 
     async fn shutdown(&self) -> Result<()> {
@@ -104,15 +146,22 @@ impl LanguageServer for Backend {
         params: DocumentSymbolParams,
     ) -> Result<Option<DocumentSymbolResponse>> {
         let uri = params.text_document.uri;
-        let info = SymbolInformation {
-            name: "doc_sbol".to_string(),
-            kind: SymbolKind::FUNCTION,
-            tags: None,
-            deprecated: None,
-            location: Location::new(uri, Range::new(Position::new(0, 1), Position::new(2, 3))),
-            container_name: None,
+        let info = |k: String, v: Location| -> SymbolInformation {
+            SymbolInformation {
+                name: k,
+                kind: SymbolKind::FUNCTION,
+                tags: None,
+                deprecated: None,
+                location: v,
+                container_name: None,
+            }
         };
-        let res = DocumentSymbolResponse::Flat(vec![info]);
+        let ks: Vec<_> = self
+            .ast_map
+            .iter()
+            .map(|c| info(c.key().clone(), c.value().clone()))
+            .collect();
+        let res = DocumentSymbolResponse::Flat(ks);
         Ok(Some(res))
     }
 
