@@ -14,6 +14,7 @@ use tower_lsp::{Client, LanguageServer, LspService, Server};
 struct Backend {
     client: Client,
     ast_map: DashMap<String, Location>,
+    symbol_map: DashMap<String, Location>,
     document_map: DashMap<String, Rope>,
 }
 
@@ -22,7 +23,7 @@ impl Backend {
         let rope = ropey::Rope::from_str(&params.text);
         self.document_map
             .insert(params.uri.to_string(), rope.clone());
-        let diag_msg = format!("{:?}", self.ast_map);
+        let diag_msg = format!("{:?}", self.symbol_map);
         let diag = Diagnostic::new_simple(Range::default(), diag_msg);
         let diags = vec![diag];
         self.client
@@ -48,7 +49,7 @@ impl Backend {
             };
             let symbol = keyword.as_str().trim().to_string();
             let loc = keyword.as_span().into_lsp_location(&params.uri);
-            self.ast_map.insert(symbol, loc);
+            self.symbol_map.insert(symbol, loc);
         }
     }
 }
@@ -132,7 +133,7 @@ impl LanguageServer for Backend {
             }
         };
         let ks: Vec<_> = self
-            .ast_map
+            .symbol_map
             .iter()
             .map(|c| info(c.key().clone(), c.value().clone()))
             .collect();
@@ -183,6 +184,7 @@ async fn main() {
     let (service, socket) = LspService::new(|client| Backend {
         client,
         ast_map: DashMap::new(),
+        symbol_map: DashMap::new(),
         document_map: DashMap::new(),
     });
     Server::new(stdin, stdout, socket).serve(service).await;
