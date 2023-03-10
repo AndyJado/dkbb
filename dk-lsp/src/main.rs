@@ -125,11 +125,11 @@ impl LanguageServer for Backend {
         let info = |k: String, v: Location| -> SymbolInformation {
             SymbolInformation {
                 name: k,
-                kind: SymbolKind::FUNCTION,
+                kind: SymbolKind::STRUCT,
                 tags: None,
                 deprecated: None,
                 location: v,
-                container_name: None,
+                container_name: Some("container".to_string()),
             }
         };
         let ks: Vec<_> = self
