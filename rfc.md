@@ -1,12 +1,19 @@
-- Feature Name: (fill me in with a unique ident, my_awesome_feature)
-- Start Date: (fill me in with today's date, YYYY-MM-DD)
-- RFC PR: (leave this empty)
-- Rust Issue: (leave this empty)
+- Feature Name: lsdyna-lsp
+- Start Date: 2023-03-10
 
 # Summary
 [summary]: #summary
 
-One para explanation of the feature.
+CAE solvers normally come with a [scripting language], which is more
+powerful than GUI yet lack of general usability for production.
+There are [projects] tried to make CAE scripting easiar,
+but the goal of this RFC is to make CAE scripting easy, namely we 
+are targeting not those who already do scripting, but the GUI users.
+
+The coding part is comparably trivial, [language-server-protocal] and the [editors]
+who support it would save us tons of code, and we are using [rust] to guarantee
+software efficiency and reliability. The real kink would be how to tell the GUI story
+in an IDE properly, this RFC tries to find a answer.
 
 # Motivation
 [motivation]: #motivation
