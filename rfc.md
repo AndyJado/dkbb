@@ -22,7 +22,37 @@ in an IDE, this RFC is here to find a answer.
 # Motivation
 [motivation]: #motivation
 
-Why are we doing this? What use cases does it support? What is the expected outcome?
+We've been practising Simulation-Driven design(SDD) with manual force for pair of years,
+SDD means you have to do simulation without an initial design, which doesn't work well in a GUI,
+where you must have a design to apply the simulation on.
+So what we were actually practising was, draw some naive design, apply the simulation,
+draw a less naive desgin, apply the same simulation. We apply the same simulation in every
+iteration and it feels stupid.
+
+If I have to build a house on the river, at least let me build a boat first.
+
+The boat should work as an IDE for a start for 2 reasons.
+
+1. Every GUI operation is actually editing the script to submit to the solver,
+editing the script directly unlocks all the potential.
+2. People write codes with IDE support nowadays, they all do, why don't we?
+
+On top of that, if we manage to leave every design related field into a variable,
+and write everthing else as a function, then we have a black box where you feed it a design,
+you get the simulation result.
+We might have to develop a functional DSL to go that far,
+but [nix-language] has set a great example for us how a DSL can achieve.
+
+The first CAE solver we choose is ls-dyna,
+it makes great animation, and we had the most experience,
+I've made a toy application [duckbubble],
+where you describes you simulation with a toml file,
+and it automatically manages the relations of imported meshed-desgin with elments & materials.
+The fun story is, when I introduce it to a new student in the group,
+he get used to it quick and never had to learn how to do those steps in GUI.
+
+I believe we could use more of that.
+
 
 # Guide-level explanation
 [guide-level-explanation]: #guide-level-explanation
