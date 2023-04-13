@@ -4,20 +4,20 @@
 # Summary
 [summary]: #summary
 
-A plan is proposed to explore the posibility to do simulation before
-actually having a product design with main-stream CAE solvers.
+A plan is proposed to explore the posibility to perform CAE simulation before
+having a product design.
 
 CAE solvers normally come with a [scripting language], which is more
 powerful than GUI yet lack of general usability for production.
 There are [projects] tried to make CAE scripting easiar,
-but to achieve the  goal of this [RFC],
-we have to make CAE scripting easy, namely targeting not those who already do scripting,
-but the GUI users who never does.
+but to achieve the goal of this [RFC], we have to make CAE scripting easy,
+namely targeting not those who already do, but the GUI users.
 
-The coding part is comparably trivial, [language-server-protocal] and the [editors]
-who support it would save us tons of code, and we are using [rust] to guarantee
-software efficiency and reliability. The real kink would be how to properly tell the GUI story
-in an IDE, this RFC is here to find a answer.
+The coding part is comparably settled,
+[language server protocal] and the [editors] who support it saves us ton of codes,
+and we are exploiting Rust ecosystem to guarantee software efficiency and reliability.
+most our time should be spend on the real kink,
+how to build the narrative in a IDE? this RFC is here to find a answer.
 
 # Motivation
 [motivation]: #motivation
@@ -96,3 +96,12 @@ Why should we *not* do this?
 - What parts of the design do you expect to resolve through the RFC process before this gets merged?
 - What parts of the design do you expect to resolve through the implementation of this feature before stabilization?
 - What related issues do you consider out of scope for this RFC that could be addressed in the future independently of the solution that comes out of this RFC?
+
+[scripting language]: https://www.ansys.com/blog/what-is-apdl
+[projects]: https://github.com/gradzikb/vim-lsdyna
+[RFC]: https://github.com/rust-lang/rfcs
+[language server protocal]: https://microsoft.github.io/language-server-protocol/overviews/lsp/overview/
+[editors]: https://microsoft.github.io/language-server-protocol/implementors/tools/
+[nix-language]: https://nixos.org/manual/nix/stable/language/index.html
+[duckbubble]: https://github.com/AndyJado/duckbubble
+
