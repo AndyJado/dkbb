@@ -1,10 +1,18 @@
 [workspace]
 members = [
-  "dk-parser",
-  "dk-lsp"
+  "crates/*"
 ]
 
 default-members = [
-  "dk-lsp"
+  "crates/lsp"
 ]
 
+[workspace.dependencies]
+syntax = { path = "./crates/syntax", version = "0.0.0" }
+text-edit = { path = "./crates/text-edit", version = "0.0.0" }
+
+[workspace.package]
+rust-version = "1.68"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["TBD"]
