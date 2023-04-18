@@ -28,8 +28,7 @@ impl Backend {
             .await;
         // parse file
     }
-}
-
+} 
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
@@ -122,7 +121,7 @@ impl LanguageServer for Backend {
         Ok(Some(Hover {
             contents: HoverContents::Markup(MarkupContent {
                 kind: MarkupKind::Markdown,
-                value: "la".to_string(),
+                value: "正在施工🚧".to_string(),
             }),
             range: Some(Range::new(range.position, range.position)),
         }))
