@@ -275,6 +275,7 @@ dependencies = [
  "ropey",
  "serde",
  "serde_json",
+ "syntax",
  "tokio",
  "tower-lsp",
  "tracing-subscriber",
@@ -635,7 +636,7 @@ dependencies = [
 
 [[package]]
 name = "syntax"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "logos",
  "regex",
