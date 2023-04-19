@@ -1,7 +1,9 @@
 use ropey::Rope;
+use syntax::ast::AstNode;
+use syntax::dyna_nodes::KeyWord;
+use syntax::parse::parse_text;
 
 use dashmap::DashMap;
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tower_lsp::jsonrpc::{Error, Result};
 use tower_lsp::lsp_types::*;
@@ -28,7 +30,7 @@ impl Backend {
             .await;
         // parse file
     }
-} 
+}
 #[tower_lsp::async_trait]
 impl LanguageServer for Backend {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
@@ -64,11 +66,25 @@ impl LanguageServer for Backend {
         })
     }
 
+    // XXX
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri;
         let text = params.text_document.text;
         let version = 0;
         let language_id = "dyna".to_string();
+        // first time open should read whole str
+        let cst_parse = parse_text(&text);
+        let node = {
+            // was causing async problem, manual drop make good
+            let file = cst_parse.tree();
+            let kwd = file
+                .syntax()
+                .descendants()
+                .find_map(KeyWord::cast)
+                .expect("should have kwd");
+            kwd.syntax().text_range()
+        };
+        // let errs = cst_parse.errors.leak();
         self.on_change(TextDocumentItem {
             uri,
             text,
