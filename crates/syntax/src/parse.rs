@@ -1,7 +1,7 @@
 use std::{marker::PhantomData, sync::Arc};
 
 use logos::{Logos, Span};
-use rowan::{GreenNode, TextRange, TextSize};
+pub use rowan::{GreenNode, TextRange, TextSize};
 
 use syntax_node::SyntaxKind;
 
