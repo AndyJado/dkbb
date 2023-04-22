@@ -1,14 +1,10 @@
 [package]
-name = "lsp"
-version = "0.1.0"
+name = "ide"
+version = "0.0.0"
 edition = "2021"
 license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[[bin]]
-name = "dbk"
-path = "src/bin/main.rs"
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -18,8 +14,8 @@ tokio = { version = "1.17.0", features = ["full"] }
 tower-lsp = { version = "0.17.0"}
 dashmap = "5.1.0"
 syntax.workspace = true
-ide.workspace = true
 ide-db.workspace = true
+
 #[dev-dependencies]
 ropey = "1.6.0"
 tracing-subscriber = "0.3"
