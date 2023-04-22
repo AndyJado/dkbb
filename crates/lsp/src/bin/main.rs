@@ -1,3 +1,4 @@
+use ide::AnalysisHost;
 use ropey::Rope;
 use syntax::ast::AstNode;
 use syntax::dyna_nodes::KeyWord;
@@ -10,19 +11,16 @@ use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
 
 #[derive(Debug)]
-struct Backend {
+struct GlobalState {
     client: Client,
-    ast_map: DashMap<String, Location>,
-    symbol_map: DashMap<String, Location>,
-    document_map: DashMap<String, Rope>,
+    pub(crate) analysis_host: AnalysisHost,
+    // pub(crate) diagnostics: DiagnosticCollection,
 }
 
-impl Backend {
+impl GlobalState {
     async fn on_change(&self, params: TextDocumentItem) {
         let rope = ropey::Rope::from_str(&params.text);
-        self.document_map
-            .insert(params.uri.to_string(), rope.clone());
-        let diag_msg = format!("{:?}", self.symbol_map);
+        let diag_msg = format!("{:?}", "duh");
         let diag = Diagnostic::new_simple(Range::default(), diag_msg);
         let diags = vec![diag];
         self.client
@@ -31,8 +29,9 @@ impl Backend {
         // parse file
     }
 }
+
 #[tower_lsp::async_trait]
-impl LanguageServer for Backend {
+impl LanguageServer for GlobalState {
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> {
         Ok(InitializeResult {
             server_info: None,
@@ -108,30 +107,6 @@ impl LanguageServer for Backend {
         Ok(Some(res))
     }
 
-    async fn document_symbol(
-        &self,
-        params: DocumentSymbolParams,
-    ) -> Result<Option<DocumentSymbolResponse>> {
-        let uri = params.text_document.uri;
-        let info = |k: String, v: Location| -> SymbolInformation {
-            SymbolInformation {
-                name: k,
-                kind: SymbolKind::STRUCT,
-                tags: None,
-                deprecated: None,
-                location: v,
-                container_name: Some("container".to_string()),
-            }
-        };
-        let ks: Vec<_> = self
-            .symbol_map
-            .iter()
-            .map(|c| info(c.key().clone(), c.value().clone()))
-            .collect();
-        let res = DocumentSymbolResponse::Flat(ks);
-        Ok(Some(res))
-    }
-
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
         let range = params.text_document_position_params;
         Ok(Some(Hover {
@@ -172,11 +147,9 @@ async fn main() {
     #[cfg(feature = "runtime-agnostic")]
     let (stdin, stdout) = (stdin.compat(), stdout.compat_write());
 
-    let (service, socket) = LspService::new(|client| Backend {
+    let (service, socket) = LspService::new(|client| GlobalState {
         client,
-        ast_map: DashMap::new(),
-        symbol_map: DashMap::new(),
-        document_map: DashMap::new(),
+        analysis_host: AnalysisHost::new(),
     });
     Server::new(stdin, stdout, socket).serve(service).await;
 }

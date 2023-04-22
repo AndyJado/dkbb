@@ -1,3 +1,4 @@
+use core::fmt;
 use std::sync::{Arc, Mutex};
 
 use salsa::DebugWithDb;
@@ -10,6 +11,18 @@ pub struct Jar();
 pub struct RootDatabase {
     storage: salsa::Storage<Self>,
     logs: Option<Arc<Mutex<Vec<String>>>>,
+}
+
+impl RootDatabase {
+    pub fn new() -> RootDatabase {
+        RootDatabase::default()
+    }
+}
+
+impl fmt::Debug for RootDatabase {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RootDatabase").finish()
+    }
 }
 
 impl salsa::Database for RootDatabase {
