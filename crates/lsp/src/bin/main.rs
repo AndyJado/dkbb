@@ -1,10 +1,8 @@
 use ide::AnalysisHost;
-use ropey::Rope;
 use syntax::ast::AstNode;
 use syntax::dyna_nodes::KeyWord;
 use syntax::parse::parse_text;
 
-use dashmap::DashMap;
 use serde_json::Value;
 use tower_lsp::jsonrpc::{Error, Result};
 use tower_lsp::lsp_types::*;
@@ -36,6 +34,9 @@ impl LanguageServer for GlobalState {
         Ok(InitializeResult {
             server_info: None,
             capabilities: ServerCapabilities {
+                text_document_sync: Some(TextDocumentSyncCapability::Kind(
+                    TextDocumentSyncKind::INCREMENTAL,
+                )),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 color_provider: Some(ColorProviderCapability::Simple(true)),
                 document_symbol_provider: Some(OneOf::Right(DocumentSymbolOptions {
@@ -84,16 +85,34 @@ impl LanguageServer for GlobalState {
             kwd.syntax().text_range()
         };
         // let errs = cst_parse.errors.leak();
-        self.on_change(TextDocumentItem {
-            uri,
-            text,
-            version,
-            language_id,
-        })
-        .await;
+        // self.on_change(TextDocumentItem {
+        //     uri,
+        //     text,
+        //     version,
+        //     language_id,
+        // })
+        // .await;
         self.client
             .log_message(MessageType::INFO, "file opened!")
             .await;
+    }
+
+    async fn did_change(&self, params: DidChangeTextDocumentParams) {
+        let DidChangeTextDocumentParams {
+            text_document: VersionedTextDocumentIdentifier { uri, version },
+            content_changes,
+        } = params;
+        for event in content_changes {
+            let TextDocumentContentChangeEvent {
+                range: Some(range),
+                range_length: _,
+                text,
+                // assume all change have range
+            } = event else {return};
+            // i.range
+            todo!()
+        }
+        // self.on_change(params);
     }
 
     async fn shutdown(&self) -> Result<()> {
