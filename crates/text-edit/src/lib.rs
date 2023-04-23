@@ -107,6 +107,7 @@ impl TextEdit {
             text.reserve(additional.into());
         }
 
+        // modification starting from behind won't change index in the front
         for indel in self.indels.iter().rev() {
             indel.apply(text);
         }
