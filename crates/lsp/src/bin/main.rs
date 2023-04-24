@@ -9,6 +9,7 @@ use syntax::dyna_nodes::KeyWord;
 use syntax::parse::parse_text;
 
 use serde_json::Value;
+use text_edit::Indel;
 use tower_lsp::jsonrpc::{Error, Result};
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
@@ -116,8 +117,16 @@ impl LanguageServer for GlobalState {
             content_changes,
         } = params;
         let line_index = LineIndex::new(&self.vfs.read().unwrap());
-        let edits = user_edit(&line_index, content_changes);
+        let mut edits = user_edit(&line_index, content_changes);
+        let diags = edits
+            .into_iter()
+            .map(|c| {
+                let Indel { insert, delete } = c;
+                Diagnostic::new_simple(range(&line_index, delete), insert)
+            })
+            .collect();
         // self.on_change(params);
+        self.client.publish_diagnostics(uri, diags, None).await;
     }
 
     async fn shutdown(&self) -> Result<()> {
