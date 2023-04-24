@@ -11,6 +11,9 @@ pub struct AnalysisHost {
 }
 
 impl AnalysisHost {
+    pub fn db(&self) -> std::sync::MutexGuard<'_, RootDatabase> {
+        self.db.lock().unwrap()
+    }
     pub fn db_with(&self, f: &dyn Fn(&RootDatabase)) {
         f(&*self.db.lock().unwrap())
     }

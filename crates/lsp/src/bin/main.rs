@@ -17,6 +17,9 @@ struct GlobalState {
 }
 
 impl GlobalState {
+    fn db(&self) -> std::sync::MutexGuard<'_, ide_db::RootDatabase> {
+        self.analysis_host.db()
+    }
     async fn on_change(&self, params: TextDocumentItem) {
         let rope = ropey::Rope::from_str(&params.text);
         let diag_msg = format!("{:?}", "duh");
@@ -75,12 +78,9 @@ impl LanguageServer for GlobalState {
         let language_id = "dyna".to_string();
         // first time open should read whole str
         let cst_parse = parse_text(&text);
-        let source = SourceProgram::new(&*self.analysis_host.db.lock().unwrap(), text.to_string());
-        ide_db::ir::compile(&*self.analysis_host.db.lock().unwrap(), source);
-        let mut diags = ide_db::ir::compile::accumulated::<Diagnostics>(
-            &*self.analysis_host.db.lock().unwrap(),
-            source,
-        );
+        let source = SourceProgram::new(&*self.db(), text.to_string());
+        ide_db::ir::compile(&*self.db(), source);
+        let mut diags = ide_db::ir::compile::accumulated::<Diagnostics>(&*self.db(), source);
         let diags = diags
             .into_iter()
             .map(|e| Diagnostic::new_simple(Range::default(), e.message))
