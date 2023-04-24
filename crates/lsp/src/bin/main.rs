@@ -1,4 +1,5 @@
 use ide::AnalysisHost;
+use ide_db::ir::{Diagnostics, SourceProgram};
 use syntax::ast::AstNode;
 use syntax::dyna_nodes::KeyWord;
 use syntax::parse::parse_text;
@@ -74,24 +75,9 @@ impl LanguageServer for GlobalState {
         let language_id = "dyna".to_string();
         // first time open should read whole str
         let cst_parse = parse_text(&text);
-        let node = {
-            // was causing async problem, manual drop make good
-            let file = cst_parse.tree();
-            let kwd = file
-                .syntax()
-                .descendants()
-                .find_map(KeyWord::cast)
-                .expect("should have kwd");
-            kwd.syntax().text_range()
-        };
-        // let errs = cst_parse.errors.leak();
-        // self.on_change(TextDocumentItem {
-        //     uri,
-        //     text,
-        //     version,
-        //     language_id,
-        // })
-        // .await;
+        self.analysis_host
+            .db_with(&|c| ide_db::ir::compile(c, SourceProgram::new(c, text.to_string())));
+        // self.analysis_host.diags(source)
         self.client
             .log_message(MessageType::INFO, "file opened!")
             .await;

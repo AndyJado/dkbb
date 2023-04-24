@@ -1,10 +1,20 @@
+pub mod ir;
 use core::fmt;
 use std::sync::{Arc, Mutex};
 
 use salsa::DebugWithDb;
 
 #[salsa::jar(db = Db)]
-pub struct Jar();
+pub struct Jar(
+    // input
+    crate::ir::SourceProgram,
+    // struct
+    crate::ir::Program,
+    crate::ir::Diagnostics,
+    // fn
+    crate::ir::compile,
+    crate::ir::parse,
+);
 
 #[derive(Default)]
 #[salsa::db(crate::Jar)]
@@ -39,14 +49,14 @@ impl salsa::Database for RootDatabase {
     }
 }
 
-impl salsa::ParallelDatabase for RootDatabase {
-    fn snapshot(&self) -> salsa::Snapshot<Self> {
-        salsa::Snapshot::new(RootDatabase {
-            storage: self.storage.snapshot(),
-            logs: self.logs.clone(),
-        })
-    }
-}
+// impl salsa::ParallelDatabase for RootDatabase {
+//     fn snapshot(&self) -> salsa::Snapshot<Self> {
+//         salsa::Snapshot::new(RootDatabase {
+//             storage: self.storage.snapshot(),
+//             logs: self.logs.clone(),
+//         })
+//     }
+// }
 
 pub trait Db: salsa::DbWithJar<Jar> {}
 

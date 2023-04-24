@@ -24,4 +24,4 @@ salsa = { git = "https://github.com/salsa-rs/salsa.git", package = "salsa-2022" 
 # base-db.workspace = true
 # parser.workspace = true
 syntax.workspace = true
-# text-edit.workspace = true
+text-edit.workspace = true
