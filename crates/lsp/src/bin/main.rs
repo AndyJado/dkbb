@@ -75,8 +75,17 @@ impl LanguageServer for GlobalState {
         let language_id = "dyna".to_string();
         // first time open should read whole str
         let cst_parse = parse_text(&text);
-        self.analysis_host
-            .db_with(&|c| ide_db::ir::compile(c, SourceProgram::new(c, text.to_string())));
+        let source = SourceProgram::new(&*self.analysis_host.db.lock().unwrap(), text.to_string());
+        ide_db::ir::compile(&*self.analysis_host.db.lock().unwrap(), source);
+        let mut diags = ide_db::ir::compile::accumulated::<Diagnostics>(
+            &*self.analysis_host.db.lock().unwrap(),
+            source,
+        );
+        let diags = diags
+            .into_iter()
+            .map(|e| Diagnostic::new_simple(Range::default(), e.message))
+            .collect();
+        self.client.publish_diagnostics(uri, diags, None).await;
         // self.analysis_host.diags(source)
         self.client
             .log_message(MessageType::INFO, "file opened!")

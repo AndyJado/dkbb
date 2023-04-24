@@ -7,7 +7,7 @@ use ide_db::{
 
 #[derive(Debug)]
 pub struct AnalysisHost {
-    db: Arc<Mutex<RootDatabase>>,
+    pub db: Arc<Mutex<RootDatabase>>,
 }
 
 impl AnalysisHost {
