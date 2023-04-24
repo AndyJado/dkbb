@@ -1,4 +1,4 @@
 target
-dk-parser/sample.k
 Cargo.lock
 Cargo.lock
+*.k

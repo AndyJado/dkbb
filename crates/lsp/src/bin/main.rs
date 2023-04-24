@@ -21,6 +21,9 @@ struct GlobalState {
 }
 
 impl GlobalState {
+    fn file(&self) -> std::sync::RwLockReadGuard<'_, std::string::String> {
+        self.vfs.read().unwrap()
+    }
     fn db(&self) -> std::sync::MutexGuard<'_, ide_db::RootDatabase> {
         self.analysis_host.db()
     }
@@ -83,29 +86,24 @@ impl LanguageServer for GlobalState {
 
         // parse whole file
         let cst_parse = parse_text(&text);
+
+        // again, async issue
         {
             let mut f = self.vfs.write().unwrap();
             *f = text;
         }
 
         // salsa input
-        let source = Program::new(
-            &*self.db(),
-            cst_parse,
-            LineIndex::new(&self.vfs.read().unwrap()),
-        );
+        let source = Program::new(&*self.db(), cst_parse);
         ide_db::ir::compile(&*self.db(), source);
-        // salsa accumulated
         let diags = ide_db::ir::compile::accumulated::<Diagnostics>(&*self.db(), source);
-        // read from salsa
-        let diags = diags
-            .into_iter()
-            .map(|e| {
-                Diagnostic::new_simple(range(&source.index(&*self.db()), e.range()), e.to_string())
-            })
-            .collect();
 
         // lsp api
+        let line_index = LineIndex::new(&self.file());
+        let diags = diags
+            .into_iter()
+            .map(|e| Diagnostic::new_simple(range(&line_index, e.range()), e.to_string()))
+            .collect();
         self.client.publish_diagnostics(uri, diags, None).await;
         self.client
             .log_message(MessageType::INFO, "file opened!")
@@ -117,6 +115,8 @@ impl LanguageServer for GlobalState {
             text_document: VersionedTextDocumentIdentifier { uri, version },
             content_changes,
         } = params;
+        let line_index = LineIndex::new(&self.vfs.read().unwrap());
+        let edits = user_edit(&line_index, content_changes);
         // self.on_change(params);
     }
 
