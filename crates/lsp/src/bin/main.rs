@@ -28,16 +28,6 @@ impl GlobalState {
     fn db(&self) -> std::sync::MutexGuard<'_, ide_db::RootDatabase> {
         self.analysis_host.db()
     }
-    async fn on_change(&self, params: TextDocumentItem) {
-        let rope = ropey::Rope::from_str(&params.text);
-        let diag_msg = format!("{:?}", "duh");
-        let diag = Diagnostic::new_simple(Range::default(), diag_msg);
-        let diags = vec![diag];
-        self.client
-            .publish_diagnostics(params.uri.clone(), diags, None)
-            .await;
-        // parse file
-    }
 }
 
 #[tower_lsp::async_trait]
