@@ -1,9 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use ide_db::{
-    ir::{self, Diagnostic, Diagnostics, SourceProgram},
-    RootDatabase,
-};
+use ide_db::RootDatabase;
 
 #[derive(Debug)]
 pub struct AnalysisHost {

@@ -3,44 +3,31 @@ use std::sync::Arc;
 use syntax::{
     dyna_nodes::SourceFile,
     parse::{parse_text, Parse},
+    syntax_error::SyntaxError,
 };
 
-#[salsa::tracked]
+use crate::line_index::LineIndex;
+
+#[salsa::input]
 pub struct Program {
     node: Parse<SourceFile>,
 }
 
-#[salsa::input]
-pub struct SourceProgram {
+#[salsa::tracked]
+pub struct SourceIndex {
     #[return_ref]
-    pub text: String,
+    pub index: LineIndex,
 }
 
 #[salsa::accumulator]
-pub struct Diagnostics(Diagnostic);
-
-#[derive(Clone, Debug)]
-pub struct Diagnostic {
-    // pub start: usize,
-    // pub end: usize,
-    pub message: String,
-}
+pub struct Diagnostics(SyntaxError);
 
 #[salsa::tracked]
-pub fn compile(db: &dyn crate::Db, source_program: SourceProgram) {
-    parse(db, source_program);
-}
-
-#[salsa::tracked]
-pub fn parse(db: &dyn crate::Db, source: SourceProgram) -> Program {
+pub fn compile(db: &dyn crate::Db, source: Program) {
     // Get the source text from the database
-    let source_text = source.text(db);
-    let cst = parse_text(&source_text);
-    let message = match cst.errors.last() {
-        Some(e) => e.to_string(),
-        None => "no err".to_string(),
-    };
-    let diag = Diagnostic { message };
-    Diagnostics::push(db, diag);
-    Program::new(db, cst)
+    let cst = source.node(db);
+    let err = cst.errors;
+    for e in err.iter() {
+        Diagnostics::push(db, e.clone())
+    }
 }

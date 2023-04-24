@@ -1,5 +1,7 @@
 use ide::AnalysisHost;
-use ide_db::ir::{Diagnostics, SourceProgram};
+use ide_db::ir::{Diagnostics, Program};
+use ide_db::line_index::LineIndex;
+use lsp::helper::range;
 use syntax::ast::AstNode;
 use syntax::dyna_nodes::KeyWord;
 use syntax::parse::parse_text;
@@ -78,12 +80,18 @@ impl LanguageServer for GlobalState {
         let language_id = "dyna".to_string();
         // first time open should read whole str
         let cst_parse = parse_text(&text);
-        let source = SourceProgram::new(&*self.db(), text.to_string());
+        let source = Program::new(&*self.db(), cst_parse);
         ide_db::ir::compile(&*self.db(), source);
-        let mut diags = ide_db::ir::compile::accumulated::<Diagnostics>(&*self.db(), source);
+        let file_lines = ide_db::ir::SourceIndex::new(&*self.db(), LineIndex::new(&text));
+        let diags = ide_db::ir::compile::accumulated::<Diagnostics>(&*self.db(), source);
         let diags = diags
             .into_iter()
-            .map(|e| Diagnostic::new_simple(Range::default(), e.message))
+            .map(|e| {
+                Diagnostic::new_simple(
+                    range(file_lines.index(&*self.db()), e.range()),
+                    e.to_string(),
+                )
+            })
             .collect();
         self.client.publish_diagnostics(uri, diags, None).await;
         // self.analysis_host.diags(source)
@@ -105,7 +113,7 @@ impl LanguageServer for GlobalState {
                 // assume all change have range
             } = event else {return};
             // i.range
-            todo!()
+            // todo!()
         }
         // self.on_change(params);
     }

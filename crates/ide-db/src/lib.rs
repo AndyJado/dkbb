@@ -1,4 +1,5 @@
 pub mod ir;
+pub mod line_index;
 use core::fmt;
 use std::sync::{Arc, Mutex};
 
@@ -7,13 +8,12 @@ use salsa::DebugWithDb;
 #[salsa::jar(db = Db)]
 pub struct Jar(
     // input
-    crate::ir::SourceProgram,
-    // struct
     crate::ir::Program,
+    // struct
+    crate::ir::SourceIndex,
     crate::ir::Diagnostics,
     // fn
     crate::ir::compile,
-    crate::ir::parse,
 );
 
 #[derive(Default)]
