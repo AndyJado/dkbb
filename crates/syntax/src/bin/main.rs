@@ -1,4 +1,9 @@
-use syntax::{ast::AstNode, dyna_nodes::KeyWord, parse::parse_text, syntax_node::SyntaxNode};
+use syntax::{
+    ast::AstNode,
+    dyna_nodes::KeyWord,
+    parse::parse_text,
+    syntax_node::{print, SyntaxNode},
+};
 
 fn main() {
     let source_code = "*MAT_ENHANCED_COMPOSITE_DAMAGE_TITLE
@@ -17,9 +22,9 @@ Default MAT54-MAT55 MAT_ENHANCED_COMPOSITE_DAMAGE
     // assert!(parse.errors().is_empty());
     let file = parse.tree();
     for i in file.syntax().descendants() {
-        // println!("{:#?},{:#?}", i.kind(), i.text_range());
-        let Some(mut kwd) = KeyWord::cast(i) else {continue};
-        kwd.play();
+        println!("{:#?},{:#?}", i.kind(), i.text_range());
+        // let Some(mut kwd) = KeyWord::cast(i) else {continue};
+        // kwd.play();
     }
 }
 

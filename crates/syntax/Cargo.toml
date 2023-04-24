@@ -10,3 +10,6 @@ logos = "0.12.1"
 # logos = "0.12.1"
 regex = "1.7.2"
 rowan = "0.15.10"
+
+text-edit.workspace = true
+

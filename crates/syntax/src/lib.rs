@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod dyna_nodes;
 pub mod parse;
+pub mod reparsing;
 pub mod syntax_error;
 pub mod syntax_node;
 
