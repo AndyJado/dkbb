@@ -78,23 +78,25 @@ impl LanguageServer for GlobalState {
         let text = params.text_document.text;
         let version = 0;
         let language_id = "dyna".to_string();
-        // first time open should read whole str
+
+        // parse whole file
         let cst_parse = parse_text(&text);
-        let source = Program::new(&*self.db(), cst_parse);
+
+        // salsa input
+        let source = Program::new(&*self.db(), cst_parse, LineIndex::new(&text));
         ide_db::ir::compile(&*self.db(), source);
-        let file_lines = ide_db::ir::SourceIndex::new(&*self.db(), LineIndex::new(&text));
+        // salsa accumulated
         let diags = ide_db::ir::compile::accumulated::<Diagnostics>(&*self.db(), source);
+        // read from salsa
         let diags = diags
             .into_iter()
             .map(|e| {
-                Diagnostic::new_simple(
-                    range(file_lines.index(&*self.db()), e.range()),
-                    e.to_string(),
-                )
+                Diagnostic::new_simple(range(&source.index(&*self.db()), e.range()), e.to_string())
             })
             .collect();
+
+        // lsp api
         self.client.publish_diagnostics(uri, diags, None).await;
-        // self.analysis_host.diags(source)
         self.client
             .log_message(MessageType::INFO, "file opened!")
             .await;

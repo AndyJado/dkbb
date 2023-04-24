@@ -10,7 +10,6 @@ pub struct Jar(
     // input
     crate::ir::Program,
     // struct
-    crate::ir::SourceIndex,
     crate::ir::Diagnostics,
     // fn
     crate::ir::compile,

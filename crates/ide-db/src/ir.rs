@@ -10,12 +10,7 @@ use crate::line_index::LineIndex;
 
 #[salsa::input]
 pub struct Program {
-    node: Parse<SourceFile>,
-}
-
-#[salsa::tracked]
-pub struct SourceIndex {
-    #[return_ref]
+    pub node: Parse<SourceFile>,
     pub index: LineIndex,
 }
 
