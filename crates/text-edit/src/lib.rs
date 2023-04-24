@@ -189,7 +189,7 @@ impl TextEditBuilder {
             .iter()
             .any(|indel| indel.delete.contains_inclusive(offset))
     }
-    fn indel(&mut self, indel: Indel) {
+    pub fn indel(&mut self, indel: Indel) {
         self.indels.push(indel);
         if self.indels.len() <= 16 {
             assert_disjoint_or_equal(&mut self.indels);

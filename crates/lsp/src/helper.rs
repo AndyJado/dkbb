@@ -4,7 +4,32 @@ use ide_db::line_index::LineCol;
 use ide_db::line_index::LineIndex;
 use syntax::parse::TextRange;
 use syntax::parse::TextSize;
+use text_edit::Indel;
+use text_edit::TextEdit;
+use text_edit::TextEditBuilder;
+use tower_lsp::lsp_types::TextDocumentContentChangeEvent;
 use tower_lsp::lsp_types::{Position, Range};
+
+pub type LspEdit = tower_lsp::lsp_types::TextEdit;
+
+// XXX:untested
+pub fn user_edit(line_index: &LineIndex, changes: Vec<TextDocumentContentChangeEvent>) -> TextEdit {
+    let mut edits = TextEdit::builder();
+    for c in changes {
+        let (Some(range), new_text) = (c.range, c.text) else {continue};
+        let edit = to_indel(line_index, LspEdit { range, new_text });
+        edits.indel(edit);
+    }
+    edits.finish()
+}
+
+pub fn to_indel(line_index: &LineIndex, edit: LspEdit) -> Indel {
+    let LspEdit { range, new_text } = edit;
+    Indel {
+        insert: new_text,
+        delete: text_range(line_index, range).unwrap(),
+    }
+}
 
 pub fn position(line_index: &LineIndex, offset: TextSize) -> Position {
     let line_col = line_index.line_col(offset);
