@@ -1,12 +1,4 @@
-use std::sync::Arc;
-
-use syntax::{
-    dyna_nodes::SourceFile,
-    parse::{parse_text, Parse},
-    syntax_error::SyntaxError,
-};
-
-use crate::line_index::LineIndex;
+use syntax::{dyna_nodes::SourceFile, parse::Parse, syntax_error::SyntaxError};
 
 #[salsa::input]
 pub struct Program {

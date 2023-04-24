@@ -4,8 +4,7 @@ use ide::AnalysisHost;
 use ide_db::ir::{Diagnostics, Program};
 use ide_db::line_index::LineIndex;
 use lsp::helper::{range, user_edit};
-use syntax::ast::AstNode;
-use syntax::dyna_nodes::KeyWord;
+
 use syntax::parse::parse_text;
 
 use serde_json::Value;
@@ -72,8 +71,8 @@ impl LanguageServer for GlobalState {
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri;
         let text = params.text_document.text;
-        let version = 0;
-        let language_id = "dyna".to_string();
+        let _version = 0;
+        let _language_id = "dyna".to_string();
 
         // parse whole file
         let cst_parse = parse_text(&text);
@@ -103,11 +102,11 @@ impl LanguageServer for GlobalState {
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let DidChangeTextDocumentParams {
-            text_document: VersionedTextDocumentIdentifier { uri, version },
+            text_document: VersionedTextDocumentIdentifier { uri, version: _ },
             content_changes,
         } = params;
         let line_index = LineIndex::new(&self.vfs.read().unwrap());
-        let mut edits = user_edit(&line_index, content_changes);
+        let edits = user_edit(&line_index, content_changes);
         let diags = edits
             .into_iter()
             .map(|c| {
@@ -123,7 +122,7 @@ impl LanguageServer for GlobalState {
         Ok(())
     }
 
-    async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
+    async fn completion(&self, _params: CompletionParams) -> Result<Option<CompletionResponse>> {
         let item = CompletionItem::new_simple("new".to_string(), "sim".to_string());
         let remains = vec![item];
         let res = CompletionResponse::Array(remains);

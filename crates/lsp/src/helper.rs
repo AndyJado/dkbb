@@ -6,7 +6,7 @@ use syntax::parse::TextRange;
 use syntax::parse::TextSize;
 use text_edit::Indel;
 use text_edit::TextEdit;
-use text_edit::TextEditBuilder;
+
 use tower_lsp::lsp_types::TextDocumentContentChangeEvent;
 use tower_lsp::lsp_types::{Position, Range};
 
