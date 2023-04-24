@@ -11,6 +11,7 @@ use crate::line_index::LineIndex;
 #[salsa::input]
 pub struct Program {
     pub node: Parse<SourceFile>,
+    #[return_ref]
     pub index: LineIndex,
 }
 

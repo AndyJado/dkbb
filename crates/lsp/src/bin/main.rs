@@ -1,7 +1,9 @@
+use std::sync::{Arc, RwLock};
+
 use ide::AnalysisHost;
 use ide_db::ir::{Diagnostics, Program};
 use ide_db::line_index::LineIndex;
-use lsp::helper::range;
+use lsp::helper::{range, user_edit};
 use syntax::ast::AstNode;
 use syntax::dyna_nodes::KeyWord;
 use syntax::parse::parse_text;
@@ -15,7 +17,7 @@ use tower_lsp::{Client, LanguageServer, LspService, Server};
 struct GlobalState {
     client: Client,
     pub(crate) analysis_host: AnalysisHost,
-    // pub(crate) diagnostics: DiagnosticCollection,
+    vfs: Arc<RwLock<String>>, // pub(crate) diagnostics: DiagnosticCollection,
 }
 
 impl GlobalState {
@@ -81,9 +83,17 @@ impl LanguageServer for GlobalState {
 
         // parse whole file
         let cst_parse = parse_text(&text);
+        {
+            let mut f = self.vfs.write().unwrap();
+            *f = text;
+        }
 
         // salsa input
-        let source = Program::new(&*self.db(), cst_parse, LineIndex::new(&text));
+        let source = Program::new(
+            &*self.db(),
+            cst_parse,
+            LineIndex::new(&self.vfs.read().unwrap()),
+        );
         ide_db::ir::compile(&*self.db(), source);
         // salsa accumulated
         let diags = ide_db::ir::compile::accumulated::<Diagnostics>(&*self.db(), source);
@@ -107,16 +117,6 @@ impl LanguageServer for GlobalState {
             text_document: VersionedTextDocumentIdentifier { uri, version },
             content_changes,
         } = params;
-        for event in content_changes {
-            let TextDocumentContentChangeEvent {
-                range: Some(range),
-                range_length: _,
-                text,
-                // assume all change have range
-            } = event else {return};
-            // i.range
-            // todo!()
-        }
         // self.on_change(params);
     }
 
@@ -174,6 +174,7 @@ async fn main() {
     let (service, socket) = LspService::new(|client| GlobalState {
         client,
         analysis_host: AnalysisHost::new(),
+        vfs: Arc::new(RwLock::new(String::new())),
     });
     Server::new(stdin, stdout, socket).serve(service).await;
 }
