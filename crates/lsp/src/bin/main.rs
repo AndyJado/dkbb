@@ -1,4 +1,3 @@
-use std::fs;
 use std::sync::{Arc, RwLock};
 
 use ide::AnalysisHost;
@@ -118,19 +117,6 @@ impl LanguageServer for GlobalState {
         } = params;
         let line_index = LineIndex::new(&self.vfs.read().unwrap());
         let edits = user_edit(&line_index, content_changes);
-
-        edits.apply(&mut self.vfs.write().unwrap());
-        let (file_new, file_old) = (
-            &*self.file().clone(),
-            fs::read_to_string(uri.path()).unwrap(),
-        );
-        if file_new != file_old {
-            let diags = vec![Diagnostic::new_simple(
-                Range::default(),
-                format!("{:?}", edits),
-            )];
-            self.client.publish_diagnostics(uri, diags, None).await;
-        }
         // self.on_change(params);
     }
 
