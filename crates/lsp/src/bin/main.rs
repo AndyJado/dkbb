@@ -94,16 +94,7 @@ impl LanguageServer for GlobalState {
     // XXX
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri;
-        let _version = 0;
-        let _language_id = "dyna".to_string();
-
         let source = self.db().input(uri.path());
-        // dead locked
-        // {
-        //     self.analysis_host.lock().unwrap().cst = Some(source.node(&*self.db()).clone());
-        // }
-        // again, async issue
-        // salsa input
         compile(&*self.db(), source, None);
         let diags = compile::accumulated::<Diagnostics>(&*self.db(), source, None);
         self.client.publish_diagnostics(uri, diags, None).await;
