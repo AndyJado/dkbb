@@ -10,6 +10,11 @@ use std::{
 use ir::SourceProgram;
 use line_index::LineIndex;
 use salsa::DebugWithDb;
+use syntax::{
+    dyna_nodes::SourceFile,
+    parse::{parse_text, Parse},
+};
+use text_edit::TextEdit;
 use tower_lsp::lsp_types::{Diagnostic, Range};
 
 #[salsa::jar(db = Db)]
