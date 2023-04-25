@@ -17,10 +17,8 @@ pub struct Jar(
     // input
     crate::ir::SourceProgram,
     // struct
-    crate::ir::Program,
     crate::ir::Diagnostics,
     // fn
-    crate::ir::parse,
     crate::ir::compile,
 );
 

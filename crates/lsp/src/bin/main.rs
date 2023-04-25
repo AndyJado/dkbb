@@ -1,7 +1,7 @@
 use std::fs;
 use std::sync::{Arc, Mutex};
 
-use lsp::ir::{compile, parse, Diagnostics, SourceProgram};
+use lsp::ir::{compile, Diagnostics, SourceProgram};
 use lsp::{Db, RootDatabase};
 
 use serde_json::Value;
