@@ -23,9 +23,11 @@ pub struct Jar(
     crate::ir::Source,
     crate::ir::Diff,
     // struct
+    crate::ir::Card,
     crate::ir::SourceProgram,
     crate::ir::Diagnostics,
     // fn
+    crate::ir::mat_54,
     crate::ir::parse,
     crate::ir::foo,
     crate::ir::compile,

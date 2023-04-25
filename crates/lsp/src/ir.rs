@@ -1,14 +1,14 @@
-use std::fs;
+use std::{fs, sync::Arc};
 
 use syntax::{
     dyna_nodes::SourceFile,
-    parse::{parse_text, Parse},
+    parse::{parse_text, GreenNode, Parse},
     reparsing::reparse_card,
-    syntax_node::SyntaxKind,
+    syntax_node::{SyntaxKind, SyntaxNode},
 };
 
-use text_edit::TextEdit;
-use tower_lsp::lsp_types::{Diagnostic, TextDocumentContentChangeEvent};
+use text_edit::{TextEdit, TextSize};
+use tower_lsp::lsp_types::{Diagnostic, Position, Range, TextDocumentContentChangeEvent};
 
 use crate::{
     helper::{range, user_edit},
@@ -26,6 +26,11 @@ pub struct SourceProgram {
     #[return_ref]
     pub lines: LineIndex,
     pub node: Parse<SourceFile>,
+}
+
+#[salsa::tracked]
+pub struct Card {
+    pub node: GreenNode,
 }
 
 #[salsa::input]
@@ -77,14 +82,32 @@ pub fn compile(db: &dyn crate::Db, source: Source, edit: Option<Diff>) {
     });
 
     for i in cst.to_syntax().syntax_node().descendants() {
-        let range = range(&lines, i.text_range());
+        let rng = range(&lines, i.text_range());
         match i.kind() {
             SyntaxKind::GEOMETRY => {
-                Diagnostics::push(db, Diagnostic::new_simple(range, "here a geo!".to_string()))
+                Diagnostics::push(db, Diagnostic::new_simple(rng, "here a geo!".to_string()))
             }
             SyntaxKind::CARD => {
-                let kwd = i.descendants().find(|kd| kd.kind() == SyntaxKind::KEYWORD);
-                Diagnostics::push(db, Diagnostic::new_simple(range, "here a kwd!".to_string()))
+                let mut card_node = i.descendants();
+                let Some(kwd) = card_node.find(|kd| kd.kind() == SyntaxKind::KEYWORD) else {continue};
+                let (wd, rg) = (kwd.text().to_string(), kwd.text_range());
+                if wd.trim() == "*MAT_ENHANCED_COMPOSITE_DAMAGE_TITLE" {
+                    let rng = range(lines, rg);
+                    Diagnostics::push(
+                        db,
+                        Diagnostic::new_simple(rng, "sorry I only recogonize this one".to_string()),
+                    );
+                    match card_node.next() {
+                        Some(nd) => {
+                            if nd.kind() == SyntaxKind::DECK {
+                                let rng: Range = range(lines, nd.text_range());
+                                let green = nd.green().into_owned();
+                                mat_54(db, Card::new(db, green), rng.start.line)
+                            }
+                        }
+                        None => {}
+                    }
+                }
             }
             _ => {}
         }
@@ -97,4 +120,16 @@ pub fn compile(db: &dyn crate::Db, source: Source, edit: Option<Diff>) {
     if let Some(diff) = edit {
         foo(db, source, diff)
     };
+}
+
+#[salsa::tracked]
+pub fn mat_54(db: &dyn crate::Db, card: Card, line: u32) {
+    let line = line - 1;
+    let node = card.node(db);
+    let pos = Position {
+        line,
+        ..Default::default()
+    };
+    let e = Diagnostic::new_simple(Range::new(pos, pos), format!("{:?}", node.kind()));
+    Diagnostics::push(db, e);
 }
