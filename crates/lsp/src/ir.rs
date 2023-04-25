@@ -4,6 +4,7 @@ use syntax::{
     dyna_nodes::SourceFile,
     parse::{parse_text, Parse},
     reparsing::reparse_card,
+    syntax_node::SyntaxKind,
 };
 
 use text_edit::TextEdit;
@@ -68,13 +69,27 @@ pub fn foo(db: &dyn crate::Db, source: SourceProgram, diff: Diff) {
 pub fn compile(db: &dyn crate::Db, source: Source, edit: Option<Diff>) {
     let source = parse(db, source);
     let (cst, lines) = (source.node(db), source.lines(db));
-    let err = cst.errors;
+    let err = cst.errors.clone();
     let diags = err.iter().map(|c| {
         let range = range(&lines, c.range());
         let msg = c.to_string();
         Diagnostic::new_simple(range, msg)
     });
-    let _node = cst.green;
+
+    for i in cst.to_syntax().syntax_node().descendants() {
+        let range = range(&lines, i.text_range());
+        match i.kind() {
+            SyntaxKind::GEOMETRY => {
+                Diagnostics::push(db, Diagnostic::new_simple(range, "here a geo!".to_string()))
+            }
+            SyntaxKind::CARD => {
+                let kwd = i.descendants().find(|kd| kd.kind() == SyntaxKind::KEYWORD);
+                Diagnostics::push(db, Diagnostic::new_simple(range, "here a kwd!".to_string()))
+            }
+            _ => {}
+        }
+    }
+
     for e in diags {
         Diagnostics::push(db, e)
     }
