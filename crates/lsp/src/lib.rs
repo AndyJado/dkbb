@@ -31,6 +31,7 @@ pub struct Jar(
 #[salsa::db(crate::Jar)]
 pub struct RootDatabase {
     storage: salsa::Storage<Self>,
+    pub cst: Option<Parse<SourceFile>>,
     logs: Option<Arc<Mutex<Vec<String>>>>,
 }
 
@@ -70,17 +71,20 @@ impl salsa::Database for RootDatabase {
 // }
 
 pub trait Db: salsa::DbWithJar<Jar> {
-    fn input(&self, path: &str) -> SourceProgram;
+    fn input(&mut self, path: &str) -> SourceProgram;
+    // fn incremental(&self, diff: TextEdit) -> Program;
 }
 
 impl Db for RootDatabase {
-    fn input(&self, path: &str) -> SourceProgram {
+    fn input(&mut self, path: &str) -> SourceProgram {
         let file = fs::read_to_string(path);
         let f = match file {
             Ok(f) => f,
             Err(_) => String::new(),
         };
         let lines = LineIndex::new(&f);
-        SourceProgram::new(self, f, lines)
+        let node = parse_text(&f);
+        self.cst = Some(node.clone());
+        SourceProgram::new(self, lines, node)
     }
 }

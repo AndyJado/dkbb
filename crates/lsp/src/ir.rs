@@ -9,6 +9,7 @@ use crate::{helper::range, line_index::LineIndex};
 
 #[salsa::input]
 pub struct SourceProgram {
+    #[return_ref]
     pub lines: LineIndex,
     pub node: Parse<SourceFile>,
 }

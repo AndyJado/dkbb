@@ -118,7 +118,9 @@ impl LanguageServer for GlobalState {
 
         let dbg_dg = {
             let dbg_file = fs::read_to_string(uri.path()).unwrap_or("can't read uri".to_string());
-            vec![Diagnostic::new_simple(Range::default(), dbg_file)]
+            let green = &self.db().cst;
+            let duh = format!("{:?}", green);
+            vec![Diagnostic::new_simple(Range::default(), duh)]
         };
 
         // let diags: Vec<Diagnostic> = edits
