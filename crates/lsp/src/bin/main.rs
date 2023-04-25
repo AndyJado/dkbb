@@ -2,7 +2,7 @@ use std::fs;
 use std::sync::{Arc, RwLock};
 
 use ide::AnalysisHost;
-use ide_db::ir::{Diagnostics, Program};
+use ide_db::ir::{Diagnostics, Program, Vfs};
 use ide_db::line_index::LineIndex;
 use lsp::helper::{range, user_edit};
 
@@ -18,13 +18,9 @@ use tower_lsp::{Client, LanguageServer, LspService, Server};
 struct GlobalState {
     client: Client,
     pub(crate) analysis_host: AnalysisHost,
-    vfs: Arc<RwLock<String>>, // pub(crate) diagnostics: DiagnosticCollection,
 }
 
 impl GlobalState {
-    fn file(&self) -> std::sync::RwLockReadGuard<'_, std::string::String> {
-        self.vfs.read().unwrap()
-    }
     fn db(&self) -> std::sync::MutexGuard<'_, ide_db::RootDatabase> {
         self.analysis_host.db()
     }
@@ -68,29 +64,26 @@ impl LanguageServer for GlobalState {
         })
     }
 
+    async fn did_save(&self, params: DidSaveTextDocumentParams) {
+        let _ = params;
+    }
+
     // XXX
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri;
-        let text = params.text_document.text;
         let _version = 0;
         let _language_id = "dyna".to_string();
 
         // parse whole file
-        let cst_parse = parse_text(&text);
+        let vf = Vfs::new(&*self.db(), uri.path().into());
 
         // again, async issue
-        {
-            let mut f = self.vfs.write().unwrap();
-            *f = text;
-        }
-
         // salsa input
-        let source = Program::new(&*self.db(), cst_parse);
-        ide_db::ir::compile(&*self.db(), source);
-        let diags = ide_db::ir::compile::accumulated::<Diagnostics>(&*self.db(), source);
+        ide_db::ir::compile(&*self.db(), vf);
+        let diags = ide_db::ir::compile::accumulated::<Diagnostics>(&*self.db(), vf);
+        let line_index = ide_db::ir::read(&*self.db(), vf).lines();
 
         // lsp api
-        let line_index = LineIndex::new(&self.file());
         let diags = diags
             .into_iter()
             .map(|e| Diagnostic::new_simple(range(&line_index, e.range()), e.to_string()))
@@ -106,21 +99,20 @@ impl LanguageServer for GlobalState {
             text_document: VersionedTextDocumentIdentifier { uri, version: _ },
             content_changes,
         } = params;
-        let line_index = LineIndex::new(&self.vfs.read().unwrap());
-        let edits = user_edit(&line_index, content_changes);
+        // let edits = user_edit(&line_index, content_changes);
 
         let dbg_dg = {
             let dbg_file = fs::read_to_string(uri.path()).unwrap_or("can't read uri".to_string());
             vec![Diagnostic::new_simple(Range::default(), dbg_file)]
         };
 
-        let diags: Vec<Diagnostic> = edits
-            .into_iter()
-            .map(|c| {
-                let Indel { insert, delete } = c;
-                Diagnostic::new_simple(range(&line_index, delete), insert)
-            })
-            .collect();
+        // let diags: Vec<Diagnostic> = edits
+        //     .into_iter()
+        //     .map(|c| {
+        //         let Indel { insert, delete } = c;
+        //         Diagnostic::new_simple(range(&line_index, delete), insert)
+        //     })
+        //     .collect();
         // self.on_change(params);
         self.client.publish_diagnostics(uri, dbg_dg, None).await;
     }
@@ -179,7 +171,6 @@ async fn main() {
     let (service, socket) = LspService::new(|client| GlobalState {
         client,
         analysis_host: AnalysisHost::new(),
-        vfs: Arc::new(RwLock::new(String::new())),
     });
     Server::new(stdin, stdout, socket).serve(service).await;
 }

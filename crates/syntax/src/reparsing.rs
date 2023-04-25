@@ -11,7 +11,7 @@ pub fn reparse_card(root: &SyntaxNode, edit: &Indel) -> Option<(GreenNode, Vec<S
     match current_node.kind() {
         GEOMETRY => {
             err.push(SyntaxError::new(
-                "don't modify nodes here! naughty!".to_string(),
+                "don't modify geometry in a text file yet! naughty!".to_string(),
                 current_node.text_range(),
             ));
             green = root.green().into_owned();

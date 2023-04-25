@@ -8,10 +8,14 @@ use salsa::DebugWithDb;
 #[salsa::jar(db = Db)]
 pub struct Jar(
     // input
-    crate::ir::Program,
+    crate::ir::Vfs,
     // struct
+    crate::ir::SourceProgram,
+    crate::ir::Program,
     crate::ir::Diagnostics,
     // fn
+    crate::ir::read,
+    crate::ir::parse,
     crate::ir::compile,
 );
 
