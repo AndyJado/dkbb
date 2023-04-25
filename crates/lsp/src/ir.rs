@@ -1,13 +1,13 @@
-use std::{fs, sync::Arc};
+use std::{fs};
 
 use syntax::{
     dyna_nodes::SourceFile,
     parse::{parse_text, GreenNode, Parse},
     reparsing::reparse_card,
-    syntax_node::{SyntaxKind, SyntaxNode},
+    syntax_node::{SyntaxKind},
 };
 
-use text_edit::{TextEdit, TextSize};
+
 use tower_lsp::lsp_types::{Diagnostic, Position, Range, TextDocumentContentChangeEvent};
 
 use crate::{
@@ -58,7 +58,7 @@ pub fn foo(db: &dyn crate::Db, source: SourceProgram, diff: Diff) {
     let (cst, lines) = (source.node(db), source.lines(db));
     let edits = user_edit(lines, diff.edits(db));
     for i in edits {
-        let Some((green,err)) = reparse_card(&cst.syntax_node(), &i) else {continue;};
+        let Some((_green,err)) = reparse_card(&cst.syntax_node(), &i) else {continue;};
         let diags = err.iter().map(|c| {
             let range = range(&lines, c.range());
             let msg = c.to_string();

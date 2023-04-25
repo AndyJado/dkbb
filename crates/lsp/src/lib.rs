@@ -3,19 +3,18 @@ pub mod ir;
 pub mod line_index;
 use core::fmt;
 use std::{
-    fs,
     sync::{Arc, Mutex},
 };
 
-use ir::{Source, SourceProgram};
+use ir::{Source};
 use line_index::LineIndex;
 use salsa::DebugWithDb;
 use syntax::{
     dyna_nodes::SourceFile,
-    parse::{parse_text, Parse},
+    parse::{Parse},
 };
-use text_edit::TextEdit;
-use tower_lsp::lsp_types::{Diagnostic, Range};
+
+
 
 #[salsa::jar(db = Db)]
 pub struct Jar(
