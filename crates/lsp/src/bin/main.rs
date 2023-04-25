@@ -1,8 +1,6 @@
 use std::fs;
 use std::sync::{Arc, Mutex};
 
-use lsp::ir::{compile, Diagnostics, Vfs};
-use lsp::RootDatabase;
 
 use serde_json::Value;
 
@@ -76,13 +74,8 @@ impl LanguageServer for GlobalState {
         let _version = 0;
         let _language_id = "dyna".to_string();
 
-        // parse whole file
-        let vf = Vfs::new(&*self.db(), uri.path().into());
-
         // again, async issue
         // salsa input
-        compile(&*self.db(), vf);
-        let diags = compile::accumulated::<Diagnostics>(&*self.db(), vf);
         self.client.publish_diagnostics(uri, diags, None).await;
         self.client
             .log_message(MessageType::INFO, "file opened!")

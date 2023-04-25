@@ -1,21 +1,25 @@
-pub mod ir;
 pub mod helper;
+pub mod ir;
 pub mod line_index;
 use core::fmt;
-use std::sync::{Arc, Mutex};
+use std::{
+    fs,
+    sync::{Arc, Mutex},
+};
 
+use ir::SourceProgram;
+use line_index::LineIndex;
 use salsa::DebugWithDb;
+use tower_lsp::lsp_types::{Diagnostic, Range};
 
 #[salsa::jar(db = Db)]
 pub struct Jar(
     // input
-    crate::ir::Vfs,
-    // struct
     crate::ir::SourceProgram,
+    // struct
     crate::ir::Program,
     crate::ir::Diagnostics,
     // fn
-    crate::ir::read,
     crate::ir::parse,
     crate::ir::compile,
 );
@@ -62,6 +66,3 @@ impl salsa::Database for RootDatabase {
 //     }
 // }
 
-pub trait Db: salsa::DbWithJar<Jar> {}
-
-impl<DB> Db for DB where DB: ?Sized + salsa::DbWithJar<Jar> {}
