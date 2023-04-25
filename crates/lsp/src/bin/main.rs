@@ -1,3 +1,4 @@
+use std::fs;
 use std::sync::{Arc, RwLock};
 
 use ide::AnalysisHost;
@@ -107,7 +108,13 @@ impl LanguageServer for GlobalState {
         } = params;
         let line_index = LineIndex::new(&self.vfs.read().unwrap());
         let edits = user_edit(&line_index, content_changes);
-        let diags = edits
+
+        let dbg_dg = {
+            let dbg_file = fs::read_to_string(uri.path()).unwrap_or("can't read uri".to_string());
+            vec![Diagnostic::new_simple(Range::default(), dbg_file)]
+        };
+
+        let diags: Vec<Diagnostic> = edits
             .into_iter()
             .map(|c| {
                 let Indel { insert, delete } = c;
@@ -115,7 +122,7 @@ impl LanguageServer for GlobalState {
             })
             .collect();
         // self.on_change(params);
-        self.client.publish_diagnostics(uri, diags, None).await;
+        self.client.publish_diagnostics(uri, dbg_dg, None).await;
     }
 
     async fn shutdown(&self) -> Result<()> {
