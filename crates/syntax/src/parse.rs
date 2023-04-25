@@ -174,6 +174,10 @@ impl<'a> CstParser<'a> {
     }
 
     pub fn parse(mut self) -> Parse<SourceFile> {
+        if self.current() == None {
+            self.builder
+                .error("file has no content".to_string(), TextSize::default());
+        }
         self.builder.start_node(ROOT);
         self.skip_comment();
         loop {
