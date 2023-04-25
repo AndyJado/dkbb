@@ -3,9 +3,8 @@ use std::fs;
 use syntax::{
     dyna_nodes::SourceFile,
     parse::{parse_text, Parse},
-    syntax_error::SyntaxError,
 };
-use text_edit::{TextEdit, TextRange};
+
 use tower_lsp::lsp_types::{Diagnostic, Range};
 
 use crate::{helper::range, line_index::LineIndex};
@@ -65,7 +64,7 @@ pub fn compile(db: &dyn crate::Db, input: Vfs) {
         let msg = c.to_string();
         Diagnostic::new_simple(range, msg)
     });
-    let node = cst.green;
+    let _node = cst.green;
     for e in diags {
         Diagnostics::push(db, e)
     }

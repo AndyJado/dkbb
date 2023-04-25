@@ -1,15 +1,11 @@
 use std::fs;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 
-use line_index::LineIndex;
-use lsp::helper::{range, user_edit};
-use lsp::ir::{compile, Diagnostics, Program, Vfs};
-use lsp::{line_index, RootDatabase};
-
-use syntax::parse::parse_text;
+use lsp::ir::{compile, Diagnostics, Vfs};
+use lsp::RootDatabase;
 
 use serde_json::Value;
-use text_edit::Indel;
+
 use tower_lsp::jsonrpc::{Error, Result};
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
@@ -96,7 +92,7 @@ impl LanguageServer for GlobalState {
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let DidChangeTextDocumentParams {
             text_document: VersionedTextDocumentIdentifier { uri, version: _ },
-            content_changes,
+            content_changes: _,
         } = params;
         // let edits = user_edit(&line_index, content_changes);
 
