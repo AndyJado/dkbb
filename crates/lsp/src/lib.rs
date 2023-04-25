@@ -66,3 +66,18 @@ impl salsa::Database for RootDatabase {
 //     }
 // }
 
+pub trait Db: salsa::DbWithJar<Jar> {
+    fn input(&self, path: &str) -> SourceProgram;
+}
+
+impl Db for RootDatabase {
+    fn input(&self, path: &str) -> SourceProgram {
+        let file = fs::read_to_string(path);
+        let f = match file {
+            Ok(f) => f,
+            Err(_) => String::new(),
+        };
+        let lines = LineIndex::new(&f);
+        SourceProgram::new(self, f, lines)
+    }
+}
