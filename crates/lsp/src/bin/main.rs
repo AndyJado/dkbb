@@ -1,6 +1,8 @@
 use std::fs;
 use std::sync::{Arc, Mutex};
 
+use lsp::ir::{compile, parse, Diagnostics, SourceProgram};
+use lsp::{Db, RootDatabase};
 
 use serde_json::Value;
 
@@ -32,8 +34,16 @@ impl LanguageServer for GlobalState {
         Ok(InitializeResult {
             server_info: None,
             capabilities: ServerCapabilities {
-                text_document_sync: Some(TextDocumentSyncCapability::Kind(
-                    TextDocumentSyncKind::INCREMENTAL,
+                text_document_sync: Some(TextDocumentSyncCapability::Options(
+                    TextDocumentSyncOptions {
+                        open_close: None,
+                        change: Some(TextDocumentSyncKind::INCREMENTAL),
+                        will_save: None,
+                        will_save_wait_until: None,
+                        save: Some(TextDocumentSyncSaveOptions::SaveOptions(SaveOptions {
+                            include_text: Some(false),
+                        })),
+                    },
                 )),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 color_provider: Some(ColorProviderCapability::Simple(true)),
@@ -65,7 +75,17 @@ impl LanguageServer for GlobalState {
     }
 
     async fn did_save(&self, params: DidSaveTextDocumentParams) {
-        let _ = params;
+        let DidSaveTextDocumentParams {
+            text_document,
+            text: _,
+        } = params;
+        let uri = text_document.uri;
+        let source = self.db().input(uri.path());
+        // again, async issue
+        // salsa input
+        compile(&*self.db(), source);
+        let diags = compile::accumulated::<Diagnostics>(&*self.db(), source);
+        self.client.publish_diagnostics(uri, diags, None).await;
     }
 
     // XXX
@@ -74,8 +94,11 @@ impl LanguageServer for GlobalState {
         let _version = 0;
         let _language_id = "dyna".to_string();
 
+        let source = self.db().input(uri.path());
         // again, async issue
         // salsa input
+        compile(&*self.db(), source);
+        let diags = compile::accumulated::<Diagnostics>(&*self.db(), source);
         self.client.publish_diagnostics(uri, diags, None).await;
         self.client
             .log_message(MessageType::INFO, "file opened!")
