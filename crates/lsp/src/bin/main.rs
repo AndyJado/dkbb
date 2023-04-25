@@ -115,26 +115,14 @@ impl LanguageServer for GlobalState {
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let DidChangeTextDocumentParams {
             text_document: VersionedTextDocumentIdentifier { uri, version: _ },
-            content_changes: _,
+            content_changes,
         } = params;
-        // let edits = user_edit(&line_index, content_changes);
 
-        let dbg_dg = {
-            let dbg_file = fs::read_to_string(uri.path()).unwrap_or("can't read uri".to_string());
-            let green = &self.db().cst;
-            let duh = format!("{:?}", green);
-            vec![Diagnostic::new_simple(Range::default(), duh)]
-        };
-
-        // let diags: Vec<Diagnostic> = edits
-        //     .into_iter()
-        //     .map(|c| {
-        //         let Indel { insert, delete } = c;
-        //         Diagnostic::new_simple(range(&line_index, delete), insert)
-        //     })
-        //     .collect();
-        // self.on_change(params);
-        self.client.publish_diagnostics(uri, dbg_dg, None).await;
+        let edit = Diff::new(&*self.db(), content_changes);
+        let source = self.db().input(uri.path());
+        compile(&*self.db(), source, Some(edit));
+        let diags = lsp::ir::compile::accumulated::<Diagnostics>(&*self.db(), source, Some(edit));
+        self.client.publish_diagnostics(uri, diags, None).await;
     }
 
     async fn shutdown(&self) -> Result<()> {
