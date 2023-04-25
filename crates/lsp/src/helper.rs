@@ -1,7 +1,7 @@
+use crate::line_index::LineCol;
 use anyhow::format_err;
 use anyhow::Result;
-use ide_db::line_index::LineCol;
-use ide_db::line_index::LineIndex;
+use line_index::LineIndex;
 use syntax::parse::TextRange;
 use syntax::parse::TextSize;
 use text_edit::Indel;
@@ -9,6 +9,8 @@ use text_edit::TextEdit;
 
 use tower_lsp::lsp_types::TextDocumentContentChangeEvent;
 use tower_lsp::lsp_types::{Position, Range};
+
+use crate::line_index;
 
 pub type LspEdit = tower_lsp::lsp_types::TextEdit;
 

@@ -11,6 +11,7 @@ name = "dbk"
 path = "src/bin/main.rs"
 
 [dependencies]
+salsa = { git = "https://github.com/salsa-rs/salsa.git", package = "salsa-2022" }
 anyhow = "1.0.70"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.79"
@@ -19,8 +20,6 @@ tokio = { version = "1.17.0", features = ["full"] }
 tower-lsp = { version = "0.17.0"}
 dashmap = "5.1.0"
 syntax.workspace = true
-ide.workspace = true
-ide-db.workspace = true
 text-edit.workspace = true
 #[dev-dependencies]
 ropey = "1.6.0"

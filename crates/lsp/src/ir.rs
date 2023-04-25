@@ -6,8 +6,9 @@ use syntax::{
     syntax_error::SyntaxError,
 };
 use text_edit::{TextEdit, TextRange};
+use tower_lsp::lsp_types::{Diagnostic, Range};
 
-use crate::line_index::LineIndex;
+use crate::{helper::range, line_index::LineIndex};
 
 #[salsa::input]
 pub struct Vfs {
@@ -27,7 +28,7 @@ pub struct Program {
 }
 
 #[salsa::accumulator]
-pub struct Diagnostics(SyntaxError);
+pub struct Diagnostics(Diagnostic);
 
 #[salsa::tracked]
 pub fn read(db: &dyn crate::Db, id: Vfs) -> SourceProgram {
@@ -35,7 +36,8 @@ pub fn read(db: &dyn crate::Db, id: Vfs) -> SourceProgram {
     let f = match file {
         Ok(f) => f,
         Err(_) => {
-            let err = SyntaxError::new("can't read file from uri", TextRange::default());
+            let err =
+                Diagnostic::new_simple(Range::default(), "can't read file from uri".to_string());
             Diagnostics::push(db, err);
             String::new()
         }
@@ -54,11 +56,17 @@ pub fn parse(db: &dyn crate::Db, source: SourceProgram) -> Program {
 pub fn compile(db: &dyn crate::Db, input: Vfs) {
     // Get the source text from the database
     let file = read(db, input);
+    let lines = file.lines(db);
     let program = parse(db, file);
     let cst = program.node(db);
     let err = cst.errors;
+    let diags = err.iter().map(|c| {
+        let range = range(&lines, c.range());
+        let msg = c.to_string();
+        Diagnostic::new_simple(range, msg)
+    });
     let node = cst.green;
-    for e in err.iter() {
-        Diagnostics::push(db, e.clone())
+    for e in diags {
+        Diagnostics::push(db, e)
     }
 }

@@ -332,31 +332,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d897f394bad6a705d5f4104762e116a75639e470d80901eed05a860a95cb1904"
 
 [[package]]
-name = "ide"
-version = "0.0.0"
-dependencies = [
- "dashmap",
- "ide-db",
- "lsp-document",
- "ropey",
- "serde",
- "serde_json",
- "syntax",
- "tokio",
- "tower-lsp",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "ide-db"
-version = "0.0.0"
-dependencies = [
- "salsa-2022",
- "syntax",
- "text-edit",
-]
-
-[[package]]
 name = "idna"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -457,10 +432,9 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "dashmap",
- "ide",
- "ide-db",
  "lsp-document",
  "ropey",
+ "salsa-2022",
  "serde",
  "serde_json",
  "syntax",
@@ -860,6 +834,7 @@ dependencies = [
  "logos",
  "regex",
  "rowan",
+ "text-edit",
 ]
 
 [[package]]

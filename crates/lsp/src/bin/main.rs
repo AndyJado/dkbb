@@ -1,10 +1,10 @@
 use std::fs;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
-use ide::AnalysisHost;
-use ide_db::ir::{Diagnostics, Program, Vfs};
-use ide_db::line_index::LineIndex;
+use line_index::LineIndex;
 use lsp::helper::{range, user_edit};
+use lsp::ir::{compile, Diagnostics, Program, Vfs};
+use lsp::{line_index, RootDatabase};
 
 use syntax::parse::parse_text;
 
@@ -17,12 +17,18 @@ use tower_lsp::{Client, LanguageServer, LspService, Server};
 #[derive(Debug)]
 struct GlobalState {
     client: Client,
-    pub(crate) analysis_host: AnalysisHost,
+    pub(crate) analysis_host: Arc<Mutex<RootDatabase>>,
 }
 
 impl GlobalState {
-    fn db(&self) -> std::sync::MutexGuard<'_, ide_db::RootDatabase> {
-        self.analysis_host.db()
+    fn new(client: Client) -> Self {
+        Self {
+            client,
+            analysis_host: Arc::new(Mutex::new(RootDatabase::new())),
+        }
+    }
+    fn db(&self) -> std::sync::MutexGuard<'_, lsp::RootDatabase> {
+        self.analysis_host.lock().unwrap()
     }
 }
 
@@ -79,15 +85,8 @@ impl LanguageServer for GlobalState {
 
         // again, async issue
         // salsa input
-        ide_db::ir::compile(&*self.db(), vf);
-        let diags = ide_db::ir::compile::accumulated::<Diagnostics>(&*self.db(), vf);
-        let line_index = ide_db::ir::read(&*self.db(), vf).lines();
-
-        // lsp api
-        let diags = diags
-            .into_iter()
-            .map(|e| Diagnostic::new_simple(range(&line_index, e.range()), e.to_string()))
-            .collect();
+        compile(&*self.db(), vf);
+        let diags = compile::accumulated::<Diagnostics>(&*self.db(), vf);
         self.client.publish_diagnostics(uri, diags, None).await;
         self.client
             .log_message(MessageType::INFO, "file opened!")
@@ -168,9 +167,6 @@ async fn main() {
     #[cfg(feature = "runtime-agnostic")]
     let (stdin, stdout) = (stdin.compat(), stdout.compat_write());
 
-    let (service, socket) = LspService::new(|client| GlobalState {
-        client,
-        analysis_host: AnalysisHost::new(),
-    });
+    let (service, socket) = LspService::new(|client| GlobalState::new(client));
     Server::new(stdin, stdout, socket).serve(service).await;
 }

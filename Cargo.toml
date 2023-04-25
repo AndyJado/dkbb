@@ -9,8 +9,6 @@ default-members = [
 
 [workspace.dependencies]
 syntax = { path = "./crates/syntax", version = "0.0.0" }
-ide = { path = "./crates/ide", version = "0.0.0" }
-ide-db = { path = "./crates/ide-db", version = "0.0.0" }
 text-edit = { path = "./crates/text-edit", version = "0.0.0" }
 
 [workspace.package]
