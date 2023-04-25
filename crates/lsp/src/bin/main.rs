@@ -1,11 +1,14 @@
 use std::fs;
 use std::sync::{Arc, Mutex};
 
-use lsp::ir::{compile, Diagnostics, SourceProgram};
+use lsp::helper::{range, user_edit};
+use lsp::ir::{compile, Diagnostics, Diff, SourceProgram};
+use lsp::line_index::LineIndex;
 use lsp::{Db, RootDatabase};
 
 use serde_json::Value;
 
+use text_edit::Indel;
 use tower_lsp::jsonrpc::{Error, Result};
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer, LspService, Server};
@@ -83,8 +86,8 @@ impl LanguageServer for GlobalState {
         let source = self.db().input(uri.path());
         // again, async issue
         // salsa input
-        compile(&*self.db(), source);
-        let diags = compile::accumulated::<Diagnostics>(&*self.db(), source);
+        compile(&*self.db(), source, None);
+        let diags = compile::accumulated::<Diagnostics>(&*self.db(), source, None);
         self.client.publish_diagnostics(uri, diags, None).await;
     }
 
@@ -101,8 +104,8 @@ impl LanguageServer for GlobalState {
         // }
         // again, async issue
         // salsa input
-        compile(&*self.db(), source);
-        let diags = compile::accumulated::<Diagnostics>(&*self.db(), source);
+        compile(&*self.db(), source, None);
+        let diags = compile::accumulated::<Diagnostics>(&*self.db(), source, None);
         self.client.publish_diagnostics(uri, diags, None).await;
         self.client
             .log_message(MessageType::INFO, "file opened!")

@@ -7,7 +7,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use ir::SourceProgram;
+use ir::{Source, SourceProgram};
 use line_index::LineIndex;
 use salsa::DebugWithDb;
 use syntax::{
@@ -20,10 +20,14 @@ use tower_lsp::lsp_types::{Diagnostic, Range};
 #[salsa::jar(db = Db)]
 pub struct Jar(
     // input
-    crate::ir::SourceProgram,
+    crate::ir::Source,
+    crate::ir::Diff,
     // struct
+    crate::ir::SourceProgram,
     crate::ir::Diagnostics,
     // fn
+    crate::ir::parse,
+    crate::ir::foo,
     crate::ir::compile,
 );
 
@@ -31,7 +35,7 @@ pub struct Jar(
 #[salsa::db(crate::Jar)]
 pub struct RootDatabase {
     storage: salsa::Storage<Self>,
-    pub cst: Option<Parse<SourceFile>>,
+    pub cst: Option<(LineIndex, Parse<SourceFile>)>,
     logs: Option<Arc<Mutex<Vec<String>>>>,
 }
 
@@ -71,20 +75,11 @@ impl salsa::Database for RootDatabase {
 // }
 
 pub trait Db: salsa::DbWithJar<Jar> {
-    fn input(&mut self, path: &str) -> SourceProgram;
-    // fn incremental(&self, diff: TextEdit) -> Program;
+    fn input(&self, path: &str) -> Source;
 }
 
 impl Db for RootDatabase {
-    fn input(&mut self, path: &str) -> SourceProgram {
-        let file = fs::read_to_string(path);
-        let f = match file {
-            Ok(f) => f,
-            Err(_) => String::new(),
-        };
-        let lines = LineIndex::new(&f);
-        let node = parse_text(&f);
-        self.cst = Some(node.clone());
-        SourceProgram::new(self, lines, node)
+    fn input(&self, path: &str) -> Source {
+        Source::new(self, path.into())
     }
 }
