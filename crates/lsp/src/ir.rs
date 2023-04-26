@@ -7,7 +7,9 @@ use syntax::{
     syntax_node::SyntaxKind,
 };
 
-use tower_lsp::lsp_types::{Diagnostic, Position, Range, TextDocumentContentChangeEvent};
+use tower_lsp::lsp_types::{
+    Diagnostic, DiagnosticSeverity, Position, Range, TextDocumentContentChangeEvent,
+};
 
 use crate::{
     helper::{range, user_edit},
@@ -77,7 +79,15 @@ pub fn compile(db: &dyn crate::Db, source: Source, edit: Option<Diff>) {
     let diags = err.iter().map(|c| {
         let range = range(&lines, c.range());
         let msg = c.to_string();
-        Diagnostic::new_simple(range, msg)
+        Diagnostic::new(
+            range,
+            Some(DiagnosticSeverity::WARNING),
+            None,
+            None,
+            msg,
+            None,
+            None,
+        )
     });
 
     for i in cst.to_syntax().syntax_node().descendants() {
@@ -90,16 +100,22 @@ pub fn compile(db: &dyn crate::Db, source: Source, edit: Option<Diff>) {
                 let mut card_node = i.descendants();
                 let Some(kwd) = card_node.find(|kd| kd.kind() == SyntaxKind::KEYWORD) else {continue};
                 let (wd, rg) = (kwd.text().to_string(), kwd.text_range());
+
                 if wd.trim() == "*MAT_ENHANCED_COMPOSITE_DAMAGE_TITLE" {
                     let rng = range(lines, rg);
-                    Diagnostics::push(
-                        db,
-                        Diagnostic::new_simple(
-                            rng,
-                            "The matrix failure material model everybody know at this conference"
-                                .to_string(),
-                        ),
+                    let msg = "The matrix failure material model everybody know at this conference"
+                        .to_string();
+                    let e = Diagnostic::new(
+                        rng,
+                        Some(DiagnosticSeverity::INFORMATION),
+                        None,
+                        None,
+                        msg,
+                        None,
+                        None,
                     );
+                    Diagnostics::push(db, e);
+
                     match card_node.next() {
                         Some(nd) => {
                             if nd.kind() == SyntaxKind::DECK {
@@ -174,7 +190,15 @@ pub fn mat_54(db: &dyn crate::Db, card: Card, line: u32) {
             let s = Position::new(line, s);
             let e = Position::new(line, e);
             let err = "this strengh is un-neatural".to_string();
-            let e = Diagnostic::new_simple(Range::new(s, e), err);
+            let e = Diagnostic::new(
+                Range::new(s, e),
+                Some(DiagnosticSeverity::ERROR),
+                None,
+                None,
+                err,
+                None,
+                None,
+            );
             Diagnostics::push(db, e);
         }
     }
