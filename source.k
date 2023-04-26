@@ -192,6 +192,17 @@ $   lco/a1        a2        a3        v1        v2        v3
 
 $
 $
+*MAT_ENHANCED_COMPOSITE_DAMAGE_TITLE
+Default MAT54-MAT55 MAT_ENHANCED_COMPOSITE_DAMAGE
+       982  1.577E-9    78660.    11385.    11385.       0.3        0.        0.
+      52.9      52.9      52.9        0.       2.0
+                                    0.94     -0.06        0.
+                                      0.        0.        1.        0.        0.
+        0.        0.        2.      0.05        1.        0.        0.        0.
+  700000.  7000000.  2000000.  2000000.  7000000.      55.0      0.05
+        0.        0.        0.        0.        1.
+        0.        0.        0.        0.        0.         0        1.
+
 *MAT_FABRIC
 $      mid        ro        ea        eb        ec      prba      prca      prcb
          3   1.00e-4   2.00e+6   2.00e+6   2.00e+6      0.35      0.35      0.35
