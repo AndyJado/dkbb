@@ -1,12 +1,11 @@
-use std::{fs};
+use std::fs;
 
 use syntax::{
     dyna_nodes::SourceFile,
     parse::{parse_text, GreenNode, Parse},
     reparsing::reparse_card,
-    syntax_node::{SyntaxKind},
+    syntax_node::SyntaxKind,
 };
-
 
 use tower_lsp::lsp_types::{Diagnostic, Position, Range, TextDocumentContentChangeEvent};
 
@@ -95,7 +94,11 @@ pub fn compile(db: &dyn crate::Db, source: Source, edit: Option<Diff>) {
                     let rng = range(lines, rg);
                     Diagnostics::push(
                         db,
-                        Diagnostic::new_simple(rng, "sorry I only recogonize this one".to_string()),
+                        Diagnostic::new_simple(
+                            rng,
+                            "The matrix failure material model everybody know at this conference"
+                                .to_string(),
+                        ),
                     );
                     match card_node.next() {
                         Some(nd) => {
@@ -124,12 +127,55 @@ pub fn compile(db: &dyn crate::Db, source: Source, edit: Option<Diff>) {
 
 #[salsa::tracked]
 pub fn mat_54(db: &dyn crate::Db, card: Card, line: u32) {
-    let line = line - 1;
+    let mut line = line - 1;
+    let mut col_start: Option<u32> = None;
+    let mut col_end: Option<u32> = None;
+    let mut word_pos: Vec<(u32, u32)> = vec![];
     let node = card.node(db);
-    let pos = Position {
-        line,
-        ..Default::default()
-    };
-    let e = Diagnostic::new_simple(Range::new(pos, pos), format!("{:?}", node.kind()));
-    Diagnostics::push(db, e);
+    // let duh = {
+    let deck = node.children().into_iter().skip(1).next();
+    line += 1;
+    let records = deck.unwrap().to_string();
+    let strengh = records.lines().skip(5).next().unwrap();
+    line += 6;
+
+    let strens: Vec<f32> = strengh
+        .split_whitespace()
+        .map(|c| c.parse::<f32>().unwrap_or(0.0f32))
+        .collect();
+
+    for (i, cr) in strengh.chars().enumerate() {
+        match col_start {
+            Some(s) => match col_end {
+                Some(e) => {
+                    word_pos.push((s, e));
+                    col_end = None;
+                    col_start = None;
+                }
+                None => {
+                    if cr == ' ' {
+                        let n = i - 1;
+                        col_end = Some(n as u32);
+                    }
+                }
+            },
+            None => {
+                if cr != ' ' {
+                    col_start = Some(i as u32);
+                } else {
+                    continue;
+                };
+            }
+        }
+    }
+
+    for (n, (s, e)) in strens.into_iter().zip(word_pos) {
+        if n > 2000.0 {
+            let s = Position::new(line, s);
+            let e = Position::new(line, e);
+            let err = "this strengh is un-neatural".to_string();
+            let e = Diagnostic::new_simple(Range::new(s, e), err);
+            Diagnostics::push(db, e);
+        }
+    }
 }
