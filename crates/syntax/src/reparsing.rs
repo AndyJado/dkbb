@@ -7,31 +7,14 @@ pub fn reparse_card(root: &SyntaxNode, edit: &Indel) -> Option<(GreenNode, Vec<S
     use crate::syntax_node::SyntaxKind::{self, *};
     let mut err = vec![];
     let green;
-    let current_node = root.covering_element(edit.delete).as_node()?.clone();
-    let mom_is = |c: SyntaxKind| current_node.ancestors().find(|node| node.kind() == c);
+    let range = edit.delete;
+    let current_node = root.covering_element(range).as_node().cloned();
 
-    if let Some(node) = mom_is(GEOMETRY) {
-        err.push(SyntaxError::new(
-            "don't edit geometry yet, naughty!".to_string(),
-            TextRange::default(),
-        ))
-    }
-
-    if let Some(node) = mom_is(CARD) {
-        err.push(SyntaxError::new(
-            "got a card!".to_string(),
-            TextRange::empty(node.text_range().start()),
-        ));
-    } else {
-        for i in current_node.ancestors() {
-            let duh = i.kind();
-            err.push(SyntaxError::new(
-                format!("{:?}", duh),
-                TextRange::empty(current_node.text_range().start()),
-            ));
-        }
-    }
-    // green = root.green().into_owned();
+    let (message, range) = match current_node {
+        Some(node) => (node.text().to_string(), node.text_range()),
+        None => ("edit too much at a time".to_string(), range),
+    };
+    err.push(SyntaxError::new(message, range));
     green = root.green().into_owned();
     Some((green, err))
 }
